@@ -1,6 +1,6 @@
 module github.com/CloudStriver/cloudmind-system
 
-go 1.21.0
+go 1.20
 
 require (
 	github.com/CloudStriver/go-pkg v0.0.0-20240117111745-b4ba57a38f44
@@ -13,7 +13,6 @@ require (
 	go.mongodb.org/mongo-driver v1.13.1
 	google.golang.org/grpc v1.61.0
 )
-
 
 require (
 	github.com/apache/thrift v0.16.0 // indirect

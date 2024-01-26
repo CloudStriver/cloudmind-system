@@ -11,6 +11,7 @@ import (
 	"github.com/CloudStriver/cloudmind-system/biz/application/service"
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/config"
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/notification"
+	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/slider"
 )
 
 // Injectors from wire.go:
@@ -21,8 +22,10 @@ func NewSystemServerImpl() (*adaptor.SystemServerImpl, error) {
 		return nil, err
 	}
 	iNotificationMongoMapper := notification.NewNotificationModel(configConfig)
+	iSliderMongoMapper := slider.NewSliderModel(configConfig)
 	systemServiceImpl := &service.SystemServiceImpl{
-		MongoMapper: iNotificationMongoMapper,
+		NotificationMongoMapper: iNotificationMongoMapper,
+		SliderMongoMapper:       iSliderMongoMapper,
 	}
 	systemServerImpl := &adaptor.SystemServerImpl{
 		Config:        configConfig,

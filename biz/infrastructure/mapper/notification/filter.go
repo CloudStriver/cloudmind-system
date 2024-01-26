@@ -58,7 +58,7 @@ func (f *MongoFilter) CheckRange() {
 	if f.OnlyLastId != nil && f.OnlyFirstId != nil {
 		firstId, _ := primitive.ObjectIDFromHex(*f.OnlyFirstId)
 		lastId, _ := primitive.ObjectIDFromHex(*f.OnlyLastId)
-		f.m[consts.NotificationId] = bson.M{"$gte": firstId, "$lte": lastId}
+		f.m[consts.ID] = bson.M{"$gte": firstId, "$lte": lastId}
 	}
 }
 

@@ -2,6 +2,7 @@ package convertor
 
 import (
 	notificationmapper "github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/notification"
+	slidermapper "github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/slider"
 	gensystem "github.com/CloudStriver/service-idl-gen-go/kitex_gen/cloudmind/system"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -45,5 +46,38 @@ func NotificationFilterOptionsToMapper(in *gensystem.NotificationFilterOptions) 
 		OnlyFirstId:    in.OnlyFirstId,
 		OnlyLastId:     in.OnlyLastId,
 		OnlyIsRead:     in.OnlyIsRead,
+	}
+}
+
+func SliderToSliderMapper(in *gensystem.Slider) *slidermapper.Slider {
+	oid, _ := primitive.ObjectIDFromHex(in.SliderId)
+	return &slidermapper.Slider{
+		ID:       oid,
+		ImageUrl: in.ImageUrl,
+		LinkUrl:  in.LinkUrl,
+		Type:     in.Type,
+		IsPublic: in.IsPublic,
+	}
+}
+
+func SliderMapperToSlider(in *slidermapper.Slider) *gensystem.Slider {
+	return &gensystem.Slider{
+		SliderId:   in.ID.Hex(),
+		ImageUrl:   in.ImageUrl,
+		LinkUrl:    in.LinkUrl,
+		Type:       in.Type,
+		IsPublic:   in.IsPublic,
+		CreateTime: in.CreateAt.UnixMilli(),
+		UpdateTime: in.UpdateAt.UnixMilli(),
+	}
+}
+
+func SliderFilterOptionsToMapper(in *gensystem.SliderFilterOptions) *slidermapper.FilterOptions {
+	if in == nil {
+		return &slidermapper.FilterOptions{}
+	}
+	return &slidermapper.FilterOptions{
+		OnlyType:     in.OnlyType,
+		OnlyIsPublic: in.OnlyIsPublic,
 	}
 }

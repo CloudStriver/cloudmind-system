@@ -1,6 +1,7 @@
 package provider
 
 import (
+	slidermapper "github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/slider"
 	"github.com/google/wire"
 
 	"github.com/CloudStriver/cloudmind-system/biz/application/service"
@@ -24,4 +25,5 @@ var InfrastructureSet = wire.NewSet(
 
 var MapperSet = wire.NewSet(
 	notificationmapper.NewNotificationModel,
+	slidermapper.NewSliderModel,
 )

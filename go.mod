@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/CloudStriver/go-pkg v0.0.0-20240117111745-b4ba57a38f44
-	github.com/CloudStriver/service-idl-gen-go v0.0.0-20240126122141-e60927663187
+	github.com/CloudStriver/service-idl-gen-go v0.0.0-20240127152507-ef2faaa085cd
 	github.com/cloudwego/kitex v0.8.0
 	github.com/google/wire v0.5.0
 	github.com/kitex-contrib/obs-opentelemetry v0.2.5
@@ -13,6 +13,10 @@ require (
 	go.mongodb.org/mongo-driver v1.13.1
 	google.golang.org/grpc v1.61.0
 )
+
+//replace (
+//	github.com/CloudStriver/service-idl-gen-go => ../service-idl-gen-go
+//)
 
 require (
 	github.com/apache/thrift v0.16.0 // indirect

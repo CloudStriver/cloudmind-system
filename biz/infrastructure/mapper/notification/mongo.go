@@ -32,7 +32,7 @@ type (
 		ReadNotification(ctx context.Context, id string) error
 		Count(ctx context.Context, fopts *FilterOptions) (int64, error)
 		ReadNotifications(ctx context.Context, fopts *FilterOptions) error
-		InsertOne(ctx context.Context, data *Notification) error
+		InsertMany(ctx context.Context, data []*Notification) error
 		GetNotificationsAndCount(ctx context.Context, fopts *FilterOptions, popts *pagination.PaginationOptions, sorter mongop.MongoCursor) ([]*Notification, int64, error)
 	}
 	Notification struct {
@@ -97,14 +97,16 @@ func (m *MongoMapper) GetNotificationsAndCount(ctx context.Context, fopts *Filte
 
 	return data, count, nil
 }
-func (m *MongoMapper) InsertOne(ctx context.Context, data *Notification) error {
-	if data.ID.IsZero() {
-		data.ID = primitive.NewObjectID()
-	}
-	data.CreateAt = time.Now()
-	data.UpdateAt = time.Now()
-	key := prefixNotificationCacheKey + data.ID.Hex()
-	_, err := m.conn.InsertOne(ctx, key, data)
+func (m *MongoMapper) InsertMany(ctx context.Context, datas []*Notification) error {
+	lo.ForEach(datas, func(data *Notification, _ int) {
+		if data.ID.IsZero() {
+			data.ID = primitive.NewObjectID()
+		}
+		data.CreateAt = time.Now()
+		data.UpdateAt = time.Now()
+	})
+
+	_, err := m.conn.InsertMany(ctx, lo.ToAnySlice(datas))
 	return err
 }
 func (m *MongoMapper) GetNotifications(ctx context.Context, fopts *FilterOptions, popts *pagination.PaginationOptions, sorter mongop.MongoCursor) ([]*Notification, int64, error) {

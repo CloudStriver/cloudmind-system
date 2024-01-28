@@ -13,10 +13,9 @@ import (
 )
 
 type SystemService interface {
-	ReadNotification(ctx context.Context, req *gensystem.ReadNotificationReq) (resp *gensystem.ReadNotificationResp, err error)
 	GetNotifications(ctx context.Context, req *gensystem.GetNotificationsReq) (resp *gensystem.GetNotificationsResp, err error)
 	GetNotificationCount(ctx context.Context, req *gensystem.GetNotificationCountReq) (resp *gensystem.GetNotificationCountResp, err error)
-	CreateNotification(ctx context.Context, req *gensystem.CreateNotificationReq) (resp *gensystem.CreateNotificationResp, err error)
+	CreateNotifications(ctx context.Context, req *gensystem.CreateNotificationsReq) (resp *gensystem.CreateNotificationsResp, err error)
 	ReadNotifications(ctx context.Context, req *gensystem.ReadNotificationsReq) (resp *gensystem.ReadNotificationsResp, err error)
 	CleanNotification(ctx context.Context, req *gensystem.CleanNotificationReq) (resp *gensystem.CleanNotificationResp, err error)
 	DeleteSlider(ctx context.Context, req *gensystem.DeleteSliderReq) (resp *gensystem.DeleteSliderResp, err error)
@@ -72,14 +71,6 @@ func (s *SystemServiceImpl) GetSliders(ctx context.Context, req *gensystem.GetSl
 	return resp, nil
 }
 
-func (s *SystemServiceImpl) ReadNotification(ctx context.Context, req *gensystem.ReadNotificationReq) (resp *gensystem.ReadNotificationResp, err error) {
-	resp = new(gensystem.ReadNotificationResp)
-	if err = s.NotificationMongoMapper.ReadNotification(ctx, req.NotificationId); err != nil {
-		return resp, err
-	}
-	return resp, nil
-}
-
 func (s *SystemServiceImpl) GetNotifications(ctx context.Context, req *gensystem.GetNotificationsReq) (resp *gensystem.GetNotificationsResp, err error) {
 	resp = new(gensystem.GetNotificationsResp)
 	p := pconvertor.PaginationOptionsToModelPaginationOptions(req.PaginationOptions)
@@ -114,9 +105,12 @@ func (s *SystemServiceImpl) GetNotificationCount(ctx context.Context, req *gensy
 	return resp, nil
 }
 
-func (s *SystemServiceImpl) CreateNotification(ctx context.Context, req *gensystem.CreateNotificationReq) (resp *gensystem.CreateNotificationResp, err error) {
-	resp = new(gensystem.CreateNotificationResp)
-	if err = s.NotificationMongoMapper.InsertOne(ctx, convertor.NotificationToNotificationMapper(req.Notification)); err != nil {
+func (s *SystemServiceImpl) CreateNotifications(ctx context.Context, req *gensystem.CreateNotificationsReq) (resp *gensystem.CreateNotificationsResp, err error) {
+	resp = new(gensystem.CreateNotificationsResp)
+	notifications := lo.Map[*gensystem.Notification, *notificationmapper.Notification](req.Notifications, func(item *gensystem.Notification, _ int) *notificationmapper.Notification {
+		return convertor.NotificationToNotificationMapper(item)
+	})
+	if err = s.NotificationMongoMapper.InsertMany(ctx, notifications); err != nil {
 		return resp, err
 	}
 	return resp, nil

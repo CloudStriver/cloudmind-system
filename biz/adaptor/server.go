@@ -45,10 +45,6 @@ func (s *SystemServerImpl) GetNotificationCount(ctx context.Context, req *system
 	return s.SystemService.GetNotificationCount(ctx, req)
 }
 
-func (s *SystemServerImpl) ReadNotification(ctx context.Context, req *system.ReadNotificationReq) (res *system.ReadNotificationResp, err error) {
-	return s.SystemService.ReadNotification(ctx, req)
-}
-
-func (s *SystemServerImpl) CreateNotification(ctx context.Context, req *system.CreateNotificationReq) (res *system.CreateNotificationResp, err error) {
-	return s.SystemService.CreateNotification(ctx, req)
+func (s *SystemServerImpl) CreateNotifications(ctx context.Context, req *system.CreateNotificationsReq) (res *system.CreateNotificationsResp, err error) {
+	return s.SystemService.CreateNotifications(ctx, req)
 }

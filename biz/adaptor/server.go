@@ -13,8 +13,8 @@ type SystemServerImpl struct {
 	SystemService service.SystemService
 }
 
-func (s *SystemServerImpl) UpateNotifications(ctx context.Context, req *system.UpdateNotificationsReq) (resp *system.UpdateNotificationsResp, err error) {
-	return s.SystemService.UpateNotifications(ctx, req)
+func (s *SystemServerImpl) UpdateNotifications(ctx context.Context, req *system.UpdateNotificationsReq) (resp *system.UpdateNotificationsResp, err error) {
+	return s.SystemService.UpdateNotifications(ctx, req)
 }
 
 func (s *SystemServerImpl) DeleteNotifications(ctx context.Context, req *system.DeleteNotificationsReq) (resp *system.DeleteNotificationsResp, err error) {

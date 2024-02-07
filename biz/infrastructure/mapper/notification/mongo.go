@@ -21,8 +21,6 @@ const (
 	CollectionName = "notification"
 )
 
-const prefixNotificationCacheKey = "cache:notification:"
-
 var _ INotificationMongoMapper = (*MongoMapper)(nil)
 
 type (

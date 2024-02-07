@@ -22,7 +22,7 @@ type SystemService interface {
 	CreateSlider(ctx context.Context, req *gensystem.CreateSliderReq) (resp *gensystem.CreateSliderResp, err error)
 	GetSliders(ctx context.Context, req *gensystem.GetSlidersReq) (resp *gensystem.GetSlidersResp, err error)
 	DeleteNotifications(ctx context.Context, req *gensystem.DeleteNotificationsReq) (resp *gensystem.DeleteNotificationsResp, err error)
-	UpateNotifications(ctx context.Context, req *gensystem.UpdateNotificationsReq) (resp *gensystem.UpdateNotificationsResp, err error)
+	UpdateNotifications(ctx context.Context, req *gensystem.UpdateNotificationsReq) (resp *gensystem.UpdateNotificationsResp, err error)
 }
 
 type SystemServiceImpl struct {
@@ -42,7 +42,7 @@ func (s *SystemServiceImpl) DeleteNotifications(ctx context.Context, req *gensys
 	return resp, nil
 }
 
-func (s *SystemServiceImpl) UpateNotifications(ctx context.Context, req *gensystem.UpdateNotificationsReq) (resp *gensystem.UpdateNotificationsResp, err error) {
+func (s *SystemServiceImpl) UpdateNotifications(ctx context.Context, req *gensystem.UpdateNotificationsReq) (resp *gensystem.UpdateNotificationsResp, err error) {
 	if err = s.NotificationMongoMapper.UpdateNotifications(ctx, &notificationmapper.FilterOptions{
 		OnlyUserId:          req.OnlyUserId,
 		OnlyType:            req.OnlyType,

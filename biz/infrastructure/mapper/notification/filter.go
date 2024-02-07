@@ -2,17 +2,16 @@ package notification
 
 import (
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/consts"
+	"github.com/samber/lo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type FilterOptions struct {
-	OnlyUserId     *string
-	OnlyType       *int64
-	OnlyTargetType *int64
-	OnlyFirstId    *string
-	OnlyLastId     *string
-	OnlyIsRead     *bool
+	OnlyUserId          *string
+	OnlyType            *int64
+	OnlyIsRead          *bool
+	OnlyNotificationIds []string
 }
 
 type MongoFilter struct {
@@ -30,10 +29,19 @@ func MakeBsonFilter(options *FilterOptions) bson.M {
 func (f *MongoFilter) toBson() bson.M {
 	f.CheckOnlyUserId()
 	f.CheckOnlyType()
-	f.CheckOnlyTargetType()
-	f.CheckRange()
 	f.CheckOnlyIsRead()
+	f.CheckOnlyNotificationIds()
 	return f.m
+}
+
+func (f *MongoFilter) CheckOnlyNotificationIds() {
+	if f.OnlyNotificationIds != nil {
+		f.m[consts.ID] = bson.M{"$in": lo.Map[string, primitive.ObjectID](f.OnlyNotificationIds, func(item string, index int) primitive.ObjectID {
+			oid, _ := primitive.ObjectIDFromHex(item)
+			return oid
+		}),
+		}
+	}
 }
 
 func (f *MongoFilter) CheckOnlyUserId() {
@@ -45,20 +53,6 @@ func (f *MongoFilter) CheckOnlyUserId() {
 func (f *MongoFilter) CheckOnlyType() {
 	if f.OnlyType != nil {
 		f.m[consts.Type] = *f.OnlyType
-	}
-}
-
-func (f *MongoFilter) CheckOnlyTargetType() {
-	if f.OnlyTargetType != nil {
-		f.m[consts.TargetType] = *f.OnlyTargetType
-	}
-}
-
-func (f *MongoFilter) CheckRange() {
-	if f.OnlyLastId != nil && f.OnlyFirstId != nil {
-		firstId, _ := primitive.ObjectIDFromHex(*f.OnlyFirstId)
-		lastId, _ := primitive.ObjectIDFromHex(*f.OnlyLastId)
-		f.m[consts.ID] = bson.M{"$gte": firstId, "$lte": lastId}
 	}
 }
 

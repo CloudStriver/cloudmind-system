@@ -13,6 +13,14 @@ type SystemServerImpl struct {
 	SystemService service.SystemService
 }
 
+func (s *SystemServerImpl) UpateNotifications(ctx context.Context, req *system.UpdateNotificationsReq) (resp *system.UpdateNotificationsResp, err error) {
+	return s.SystemService.UpateNotifications(ctx, req)
+}
+
+func (s *SystemServerImpl) DeleteNotifications(ctx context.Context, req *system.DeleteNotificationsReq) (resp *system.DeleteNotificationsResp, err error) {
+	return s.SystemService.DeleteNotifications(ctx, req)
+}
+
 func (s *SystemServerImpl) GetSliders(ctx context.Context, req *system.GetSlidersReq) (resp *system.GetSlidersResp, err error) {
 	return s.SystemService.GetSliders(ctx, req)
 }
@@ -29,16 +37,8 @@ func (s *SystemServerImpl) DeleteSlider(ctx context.Context, req *system.DeleteS
 	return s.SystemService.DeleteSlider(ctx, req)
 }
 
-func (s *SystemServerImpl) ReadNotifications(ctx context.Context, req *system.ReadNotificationsReq) (res *system.ReadNotificationsResp, err error) {
-	return s.SystemService.ReadNotifications(ctx, req)
-}
-
 func (s *SystemServerImpl) GetNotifications(ctx context.Context, req *system.GetNotificationsReq) (res *system.GetNotificationsResp, err error) {
 	return s.SystemService.GetNotifications(ctx, req)
-}
-
-func (s *SystemServerImpl) CleanNotification(ctx context.Context, req *system.CleanNotificationReq) (res *system.CleanNotificationResp, err error) {
-	return s.SystemService.CleanNotification(ctx, req)
 }
 
 func (s *SystemServerImpl) GetNotificationCount(ctx context.Context, req *system.GetNotificationCountReq) (res *system.GetNotificationCountResp, err error) {

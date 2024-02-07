@@ -21,17 +21,14 @@ const (
 	CollectionName = "notification"
 )
 
-const prefixNotificationCacheKey = "cache:notification:"
-
 var _ INotificationMongoMapper = (*MongoMapper)(nil)
 
 type (
 	INotificationMongoMapper interface {
 		GetNotifications(ctx context.Context, fopts *FilterOptions, popts *pagination.PaginationOptions, sorter mongop.MongoCursor) ([]*Notification, int64, error)
-		CleanNotification(ctx context.Context, userId string) error
-		ReadNotification(ctx context.Context, id string) error
 		Count(ctx context.Context, fopts *FilterOptions) (int64, error)
-		ReadNotifications(ctx context.Context, fopts *FilterOptions) error
+		UpdateNotifications(ctx context.Context, fopts *FilterOptions, isRead bool) error
+		DeleteNotifications(ctx context.Context, fopts *FilterOptions) error
 		InsertMany(ctx context.Context, data []*Notification) error
 		GetNotificationsAndCount(ctx context.Context, fopts *FilterOptions, popts *pagination.PaginationOptions, sorter mongop.MongoCursor) ([]*Notification, int64, error)
 	}
@@ -51,6 +48,12 @@ type (
 		conn *monc.Model
 	}
 )
+
+func (m *MongoMapper) DeleteNotifications(ctx context.Context, fopts *FilterOptions) error {
+	filter := MakeBsonFilter(fopts)
+	_, err := m.conn.DeleteMany(ctx, filter)
+	return err
+}
 
 func (m *MongoMapper) GetNotificationsAndCount(ctx context.Context, fopts *FilterOptions, popts *pagination.PaginationOptions, sorter mongop.MongoCursor) ([]*Notification, int64, error) {
 	var (
@@ -148,33 +151,12 @@ func (m *MongoMapper) GetNotifications(ctx context.Context, fopts *FilterOptions
 	return data, count, nil
 }
 
-func (m *MongoMapper) ReadNotifications(ctx context.Context, fopts *FilterOptions) error {
+func (m *MongoMapper) UpdateNotifications(ctx context.Context, fopts *FilterOptions, isRead bool) error {
 	filter := MakeBsonFilter(fopts)
-	if _, err := m.conn.UpdateManyNoCache(ctx, filter, bson.M{"$set": bson.M{consts.IsRead: true, consts.UpdateAt: time.Now()}}); err != nil {
+	if _, err := m.conn.UpdateManyNoCache(ctx, filter, bson.M{"$set": bson.M{consts.IsRead: isRead, consts.UpdateAt: time.Now()}}); err != nil {
 		return err
 	}
 	return nil
-}
-
-// CleanNotification 清除未读消息
-func (m *MongoMapper) CleanNotification(ctx context.Context, userId string) error {
-	filter := bson.M{
-		consts.TargetUserId: userId,
-		consts.IsRead:       bson.M{"$exists": false},
-	}
-	_, err := m.conn.UpdateManyNoCache(ctx, filter, bson.M{"$set": bson.M{consts.IsRead: true, consts.UpdateAt: time.Now()}})
-	return err
-}
-
-func (m *MongoMapper) ReadNotification(ctx context.Context, id string) error {
-	oid, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return consts.ErrInvalidObjectId
-	}
-
-	key := prefixNotificationCacheKey + id
-	_, err = m.conn.UpdateByID(ctx, key, oid, bson.M{"$set": bson.M{consts.IsRead: true, consts.UpdateAt: time.Now()}})
-	return err
 }
 
 func (m *MongoMapper) Count(ctx context.Context, fopts *FilterOptions) (int64, error) {

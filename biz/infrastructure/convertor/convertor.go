@@ -6,18 +6,6 @@ import (
 	gensystem "github.com/CloudStriver/service-idl-gen-go/kitex_gen/cloudmind/system"
 )
 
-func NotificationInfoToNotificationMapper(in *gensystem.NotificationInfo) *notificationmapper.Notification {
-	return &notificationmapper.Notification{
-		TargetUserId:    in.TargetUserId,
-		SourceUserId:    in.SourceUserId,
-		SourceContentId: in.SourceContentId,
-		Type:            in.Type,
-		TargetType:      in.TargetType,
-		Text:            in.Text,
-		IsRead:          in.IsRead,
-	}
-}
-
 func NotificationMapperToNotification(in *notificationmapper.Notification) *gensystem.Notification {
 	return &gensystem.Notification{
 		NotificationId:  in.ID.Hex(),
@@ -28,7 +16,7 @@ func NotificationMapperToNotification(in *notificationmapper.Notification) *gens
 		Type:            in.Type,
 		Text:            in.Text,
 		CreateTime:      in.CreateAt.UnixMilli(),
-		IsRead:          in.IsRead,
+		Status:          in.Status,
 	}
 }
 

@@ -2,16 +2,13 @@ package notification
 
 import (
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/consts"
-	"github.com/samber/lo"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type FilterOptions struct {
-	OnlyUserId          *string
-	OnlyType            *int64
-	OnlyIsRead          *bool
-	OnlyNotificationIds []string
+	OnlyUserId *string
+	OnlyType   *int64
+	OnlyStatus *int64
 }
 
 type MongoFilter struct {
@@ -30,18 +27,7 @@ func (f *MongoFilter) toBson() bson.M {
 	f.CheckOnlyUserId()
 	f.CheckOnlyType()
 	f.CheckOnlyIsRead()
-	f.CheckOnlyNotificationIds()
 	return f.m
-}
-
-func (f *MongoFilter) CheckOnlyNotificationIds() {
-	if f.OnlyNotificationIds != nil {
-		f.m[consts.ID] = bson.M{"$in": lo.Map[string, primitive.ObjectID](f.OnlyNotificationIds, func(item string, index int) primitive.ObjectID {
-			oid, _ := primitive.ObjectIDFromHex(item)
-			return oid
-		}),
-		}
-	}
 }
 
 func (f *MongoFilter) CheckOnlyUserId() {
@@ -57,7 +43,7 @@ func (f *MongoFilter) CheckOnlyType() {
 }
 
 func (f *MongoFilter) CheckOnlyIsRead() {
-	if f.OnlyIsRead != nil {
-		f.m[consts.IsRead] = bson.M{"$exists": *f.OnlyIsRead}
+	if f.OnlyStatus != nil {
+		f.m[consts.Status] = *f.OnlyStatus
 	}
 }

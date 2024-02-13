@@ -14,14 +14,13 @@ import (
 )
 
 type SystemService interface {
-	GetNotifications(ctx context.Context, req *gensystem.GetNotificationsReq) (resp *gensystem.GetNotificationsResp, err error)
-	GetNotificationCount(ctx context.Context, req *gensystem.GetNotificationCountReq) (resp *gensystem.GetNotificationCountResp, err error)
-	CreateNotifications(ctx context.Context, req *gensystem.CreateNotificationsReq) (resp *gensystem.CreateNotificationsResp, err error)
 	DeleteSlider(ctx context.Context, req *gensystem.DeleteSliderReq) (resp *gensystem.DeleteSliderResp, err error)
 	UpdateSlider(ctx context.Context, req *gensystem.UpdateSliderReq) (resp *gensystem.UpdateSliderResp, err error)
 	CreateSlider(ctx context.Context, req *gensystem.CreateSliderReq) (resp *gensystem.CreateSliderResp, err error)
 	GetSliders(ctx context.Context, req *gensystem.GetSlidersReq) (resp *gensystem.GetSlidersResp, err error)
-	DeleteNotifications(ctx context.Context, req *gensystem.DeleteNotificationsReq) (resp *gensystem.DeleteNotificationsResp, err error)
+	GetNotifications(ctx context.Context, req *gensystem.GetNotificationsReq) (resp *gensystem.GetNotificationsResp, err error)
+	GetNotificationCount(ctx context.Context, req *gensystem.GetNotificationCountReq) (resp *gensystem.GetNotificationCountResp, err error)
+	CreateNotifications(ctx context.Context, req *gensystem.CreateNotificationsReq) (resp *gensystem.CreateNotificationsResp, err error)
 	UpdateNotifications(ctx context.Context, req *gensystem.UpdateNotificationsReq) (resp *gensystem.UpdateNotificationsResp, err error)
 }
 
@@ -30,25 +29,12 @@ type SystemServiceImpl struct {
 	SliderMongoMapper       slidermapper.ISliderMongoMapper
 }
 
-func (s *SystemServiceImpl) DeleteNotifications(ctx context.Context, req *gensystem.DeleteNotificationsReq) (resp *gensystem.DeleteNotificationsResp, err error) {
-	if err = s.NotificationMongoMapper.DeleteNotifications(ctx, &notificationmapper.FilterOptions{
-		OnlyUserId:          req.OnlyUserId,
-		OnlyType:            req.OnlyType,
-		OnlyIsRead:          req.OnlyIsRead,
-		OnlyNotificationIds: req.OnlyNotificationIds,
-	}); err != nil {
-		return resp, err
-	}
-	return resp, nil
-}
-
 func (s *SystemServiceImpl) UpdateNotifications(ctx context.Context, req *gensystem.UpdateNotificationsReq) (resp *gensystem.UpdateNotificationsResp, err error) {
 	if err = s.NotificationMongoMapper.UpdateNotifications(ctx, &notificationmapper.FilterOptions{
-		OnlyUserId:          req.OnlyUserId,
-		OnlyType:            req.OnlyType,
-		OnlyIsRead:          req.OnlyIsRead,
-		OnlyNotificationIds: req.OnlyNotificationIds,
-	}, req.IsRead); err != nil {
+		OnlyUserId: lo.ToPtr(req.UserId),
+		OnlyType:   req.OnlyType,
+		OnlyStatus: lo.ToPtr(int64(gensystem.NotificationStatus_NotRead)),
+	}); err != nil {
 		return resp, err
 	}
 	return resp, nil
@@ -113,10 +99,9 @@ func (s *SystemServiceImpl) GetSliders(ctx context.Context, req *gensystem.GetSl
 func (s *SystemServiceImpl) GetNotifications(ctx context.Context, req *gensystem.GetNotificationsReq) (resp *gensystem.GetNotificationsResp, err error) {
 	resp = new(gensystem.GetNotificationsResp)
 	p := pconvertor.PaginationOptionsToModelPaginationOptions(req.PaginationOptions)
-	notifications, total, err := s.NotificationMongoMapper.GetNotificationsAndCount(ctx, &notificationmapper.FilterOptions{
-		OnlyUserId: req.OnlyUserId,
+	notifications, err := s.NotificationMongoMapper.GetNotifications(ctx, &notificationmapper.FilterOptions{
+		OnlyUserId: lo.ToPtr(req.UserId),
 		OnlyType:   req.OnlyType,
-		OnlyIsRead: req.OnlyIsRead,
 	}, p, mongop.IdCursorType)
 	if err != nil {
 		return resp, err
@@ -128,16 +113,15 @@ func (s *SystemServiceImpl) GetNotifications(ctx context.Context, req *gensystem
 	if p.LastToken != nil {
 		resp.Token = *p.LastToken
 	}
-	resp.Total = total
 	return resp, nil
 }
 
 func (s *SystemServiceImpl) GetNotificationCount(ctx context.Context, req *gensystem.GetNotificationCountReq) (resp *gensystem.GetNotificationCountResp, err error) {
 	resp = new(gensystem.GetNotificationCountResp)
 	if resp.Total, err = s.NotificationMongoMapper.Count(ctx, &notificationmapper.FilterOptions{
-		OnlyUserId: req.OnlyUserId,
+		OnlyUserId: lo.ToPtr(req.UserId),
 		OnlyType:   req.OnlyType,
-		OnlyIsRead: req.OnlyIsRead,
+		OnlyStatus: lo.ToPtr(int64(gensystem.NotificationStatus_NotRead)),
 	}); err != nil {
 		return resp, err
 	}
@@ -145,10 +129,15 @@ func (s *SystemServiceImpl) GetNotificationCount(ctx context.Context, req *gensy
 }
 
 func (s *SystemServiceImpl) CreateNotifications(ctx context.Context, req *gensystem.CreateNotificationsReq) (resp *gensystem.CreateNotificationsResp, err error) {
-	notifications := lo.Map[*gensystem.NotificationInfo, *notificationmapper.Notification](req.Notifications, func(item *gensystem.NotificationInfo, _ int) *notificationmapper.Notification {
-		return convertor.NotificationInfoToNotificationMapper(item)
-	})
-	if err = s.NotificationMongoMapper.InsertMany(ctx, notifications); err != nil {
+	if err = s.NotificationMongoMapper.InsertOne(ctx, &notificationmapper.Notification{
+		TargetUserId:    req.TargetUserId,
+		SourceUserId:    req.SourceUserId,
+		SourceContentId: req.SourceContentId,
+		Type:            req.Type,
+		TargetType:      req.TargetType,
+		Text:            req.Text,
+		Status:          int64(gensystem.NotificationStatus_NotRead),
+	}); err != nil {
 		return resp, err
 	}
 	return resp, nil

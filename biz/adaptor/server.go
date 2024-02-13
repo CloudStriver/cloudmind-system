@@ -17,10 +17,6 @@ func (s *SystemServerImpl) UpdateNotifications(ctx context.Context, req *system.
 	return s.SystemService.UpdateNotifications(ctx, req)
 }
 
-func (s *SystemServerImpl) DeleteNotifications(ctx context.Context, req *system.DeleteNotificationsReq) (resp *system.DeleteNotificationsResp, err error) {
-	return s.SystemService.DeleteNotifications(ctx, req)
-}
-
 func (s *SystemServerImpl) GetSliders(ctx context.Context, req *system.GetSlidersReq) (resp *system.GetSlidersResp, err error) {
 	return s.SystemService.GetSliders(ctx, req)
 }

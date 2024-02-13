@@ -11,4 +11,5 @@ const (
 	ImageUrl     = "imageUrl"
 	LinkUrl      = "linkUrl"
 	IsPublic     = "isPublic"
+	Status       = "status"
 )

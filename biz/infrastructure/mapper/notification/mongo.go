@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/CloudStriver/go-pkg/utils/pagination"
 	"github.com/CloudStriver/go-pkg/utils/pagination/mongop"
+	gensystem "github.com/CloudStriver/service-idl-gen-go/kitex_gen/cloudmind/system"
 	"github.com/samber/lo"
 	"github.com/zeromicro/go-zero/core/mr"
 	"go.mongodb.org/mongo-driver/bson"
@@ -25,11 +26,11 @@ var _ INotificationMongoMapper = (*MongoMapper)(nil)
 
 type (
 	INotificationMongoMapper interface {
-		GetNotifications(ctx context.Context, fopts *FilterOptions, popts *pagination.PaginationOptions, sorter mongop.MongoCursor) ([]*Notification, int64, error)
+		GetNotifications(ctx context.Context, fopts *FilterOptions, popts *pagination.PaginationOptions, sorter mongop.MongoCursor) ([]*Notification, error)
 		Count(ctx context.Context, fopts *FilterOptions) (int64, error)
-		UpdateNotifications(ctx context.Context, fopts *FilterOptions, isRead bool) error
+		UpdateNotifications(ctx context.Context, fopts *FilterOptions) error
 		DeleteNotifications(ctx context.Context, fopts *FilterOptions) error
-		InsertMany(ctx context.Context, data []*Notification) error
+		InsertOne(ctx context.Context, data *Notification) error
 		GetNotificationsAndCount(ctx context.Context, fopts *FilterOptions, popts *pagination.PaginationOptions, sorter mongop.MongoCursor) ([]*Notification, int64, error)
 	}
 	Notification struct {
@@ -42,7 +43,7 @@ type (
 		Text            string             `bson:"text,omitempty" json:"text,omitempty"`
 		CreateAt        time.Time          `bson:"createAt,omitempty" json:"createAt,omitempty"`
 		UpdateAt        time.Time          `bson:"updateAt,omitempty" json:"updateAt,omitempty"`
-		IsRead          bool               `bson:"isRead,omitempty" json:"isRead,omitempty"`
+		Status          int64              `bson:"status,omitempty" json:"status,omitempty"`
 	}
 	MongoMapper struct {
 		conn *monc.Model
@@ -61,37 +62,16 @@ func (m *MongoMapper) GetNotificationsAndCount(ctx context.Context, fopts *Filte
 		count      int64
 		err1, err2 error
 	)
-	p := mongop.NewMongoPaginator(pagination.NewRawStore(sorter), popts)
-
-	filter := MakeBsonFilter(fopts)
-	sort, err := p.MakeSortOptions(ctx, filter)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	if err = mr.Finish(func() error {
-		count, err1 = m.conn.CountDocuments(ctx, filter)
+	if err := mr.Finish(func() error {
+		count, err1 = m.Count(ctx, fopts)
 		if err1 != nil {
 			return err1
 		}
 		return nil
 	}, func() error {
-		if err2 = m.conn.Find(ctx, &data, filter, &options.FindOptions{
-			Sort:  sort,
-			Limit: popts.Limit,
-			Skip:  popts.Offset,
-		}); err2 != nil {
+		data, err2 = m.GetNotifications(ctx, fopts, popts, sorter)
+		if err2 != nil {
 			return err2
-		}
-		// 如果是反向查询，反转数据
-		if *popts.Backward {
-			lo.Reverse(data)
-		}
-		if len(data) > 0 {
-			err2 = p.StoreCursor(ctx, data[0], data[len(data)-1])
-			if err2 != nil {
-				return err2
-			}
 		}
 		return nil
 	}); err != nil {
@@ -100,26 +80,23 @@ func (m *MongoMapper) GetNotificationsAndCount(ctx context.Context, fopts *Filte
 
 	return data, count, nil
 }
-func (m *MongoMapper) InsertMany(ctx context.Context, datas []*Notification) error {
-	lo.ForEach(datas, func(data *Notification, _ int) {
-		if data.ID.IsZero() {
-			data.ID = primitive.NewObjectID()
-		}
-		data.CreateAt = time.Now()
-		data.UpdateAt = time.Now()
-	})
+func (m *MongoMapper) InsertOne(ctx context.Context, data *Notification) error {
+	if data.ID.IsZero() {
+		data.ID = primitive.NewObjectID()
+	}
+	data.CreateAt = time.Now()
+	data.UpdateAt = time.Now()
 
-	_, err := m.conn.InsertMany(ctx, lo.ToAnySlice(datas))
+	_, err := m.conn.InsertOneNoCache(ctx, data)
 	return err
 }
-func (m *MongoMapper) GetNotifications(ctx context.Context, fopts *FilterOptions, popts *pagination.PaginationOptions, sorter mongop.MongoCursor) ([]*Notification, int64, error) {
+func (m *MongoMapper) GetNotifications(ctx context.Context, fopts *FilterOptions, popts *pagination.PaginationOptions, sorter mongop.MongoCursor) ([]*Notification, error) {
 	var data []*Notification
 	p := mongop.NewMongoPaginator(pagination.NewRawStore(sorter), popts)
-
 	filter := MakeBsonFilter(fopts)
 	sort, err := p.MakeSortOptions(ctx, filter)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	if err = m.conn.Find(ctx, &data, filter, &options.FindOptions{
@@ -127,33 +104,25 @@ func (m *MongoMapper) GetNotifications(ctx context.Context, fopts *FilterOptions
 		Limit: popts.Limit,
 		Skip:  popts.Offset,
 	}); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
-
 	// 如果是反向查询，反转数据
 	if *popts.Backward {
-		for i := 0; i < len(data)/2; i++ {
-			data[i], data[len(data)-i-1] = data[len(data)-i-1], data[i]
-		}
+		lo.Reverse(data)
 	}
 	if len(data) > 0 {
 		err = p.StoreCursor(ctx, data[0], data[len(data)-1])
 		if err != nil {
-			return nil, 0, err
+			return nil, err
 		}
 	}
 
-	count, err := m.conn.CountDocuments(ctx, filter)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return data, count, nil
+	return data, nil
 }
 
-func (m *MongoMapper) UpdateNotifications(ctx context.Context, fopts *FilterOptions, isRead bool) error {
+func (m *MongoMapper) UpdateNotifications(ctx context.Context, fopts *FilterOptions) error {
 	filter := MakeBsonFilter(fopts)
-	if _, err := m.conn.UpdateManyNoCache(ctx, filter, bson.M{"$set": bson.M{consts.IsRead: isRead, consts.UpdateAt: time.Now()}}); err != nil {
+	if _, err := m.conn.UpdateManyNoCache(ctx, filter, bson.M{"$set": bson.M{consts.Status: int64(gensystem.NotificationStatus_Read), consts.UpdateAt: time.Now()}}); err != nil {
 		return err
 	}
 	return nil

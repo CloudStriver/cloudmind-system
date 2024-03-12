@@ -6,8 +6,9 @@ import (
 )
 
 type FilterOptions struct {
-	OnlyUserId *string
-	OnlyType   *int64
+	OnlyUserId  *string
+	OnlyUserIds []string
+	OnlyType    *int64
 }
 
 type MongoFilter struct {
@@ -37,5 +38,13 @@ func (f *MongoFilter) CheckOnlyUserId() {
 func (f *MongoFilter) CheckOnlyType() {
 	if f.OnlyType != nil {
 		f.m[consts.Type] = *f.OnlyType
+	}
+}
+
+func (f *MongoFilter) CheckOnlyUserIds() {
+	if f.OnlyUserIds != nil {
+		f.m[consts.TargetUserId] = bson.M{
+			"in": f.OnlyUserIds,
+		}
 	}
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/CloudStriver/cloudmind-system/biz/application/service"
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/config"
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/notification"
-	notification2 "github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/notificationCount"
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/slider"
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/store/redis"
 )
@@ -24,14 +23,12 @@ func NewSystemServerImpl() (*adaptor.SystemServerImpl, error) {
 		return nil, err
 	}
 	iNotificationMongoMapper := notification.NewNotificationModel(configConfig)
-	iNotificationCountMongoMapper := notification2.NewNotificationCountModel(configConfig)
 	iSliderMongoMapper := slider.NewSliderModel(configConfig)
 	redisRedis := redis.NewRedis(configConfig)
 	systemServiceImpl := &service.SystemServiceImpl{
-		NotificationMongoMapper:      iNotificationMongoMapper,
-		NotificationCountMongoMapper: iNotificationCountMongoMapper,
-		SliderMongoMapper:            iSliderMongoMapper,
-		Redis:                        redisRedis,
+		NotificationMongoMapper: iNotificationMongoMapper,
+		SliderMongoMapper:       iSliderMongoMapper,
+		Redis:                   redisRedis,
 	}
 	systemServerImpl := &adaptor.SystemServerImpl{
 		Config:        configConfig,

@@ -2,11 +2,9 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/consts"
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/convertor"
 	notificationmapper "github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/notification"
-	notificationcountmapper "github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/notificationCount"
 	slidermapper "github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/slider"
 	"github.com/CloudStriver/go-pkg/utils/pagination/mongop"
 	"github.com/CloudStriver/go-pkg/utils/pconvertor"
@@ -15,7 +13,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"strconv"
 )
 
 type SystemService interface {
@@ -26,38 +23,12 @@ type SystemService interface {
 	GetNotifications(ctx context.Context, req *gensystem.GetNotificationsReq) (resp *gensystem.GetNotificationsResp, err error)
 	GetNotificationCount(ctx context.Context, req *gensystem.GetNotificationCountReq) (resp *gensystem.GetNotificationCountResp, err error)
 	CreateNotifications(ctx context.Context, req *gensystem.CreateNotificationsReq) (resp *gensystem.CreateNotificationsResp, err error)
-	ReadNotifications(ctx context.Context, req *gensystem.ReadNotificationsReq) (resp *gensystem.ReadNotificationsResp, err error)
-	InsertNotificationCount(ctx context.Context, req *gensystem.InsertNotificationCountReq) (resp *gensystem.InsertNotificationCountResp, err error)
-	//UpdateNotifications(ctx context.Context, req *gensystem.UpdateNotificationsReq) (resp *gensystem.UpdateNotificationsResp, err error)
 }
 
 type SystemServiceImpl struct {
-	NotificationMongoMapper      notificationmapper.INotificationMongoMapper
-	NotificationCountMongoMapper notificationcountmapper.INotificationCountMongoMapper
-	SliderMongoMapper            slidermapper.ISliderMongoMapper
-	Redis                        *redis.Redis
-}
-
-func (s *SystemServiceImpl) InsertNotificationCount(ctx context.Context, req *gensystem.InsertNotificationCountReq) (resp *gensystem.InsertNotificationCountResp, err error) {
-	uid, _ := primitive.ObjectIDFromHex(req.UserId)
-	if err = s.NotificationCountMongoMapper.InsertCount(ctx, &notificationcountmapper.NotificationCount{
-		ID:   uid,
-		Sum:  0,
-		Read: 0,
-	}); err != nil {
-		return resp, err
-	}
-	return resp, nil
-}
-func (s *SystemServiceImpl) ReadNotifications(ctx context.Context, req *gensystem.ReadNotificationsReq) (resp *gensystem.ReadNotificationsResp, err error) {
-	uid, _ := primitive.ObjectIDFromHex(req.UserId)
-	if err = s.NotificationCountMongoMapper.AddCount(ctx, &notificationcountmapper.NotificationCount{
-		ID:   uid,
-		Read: req.ReadCount,
-	}); err != nil {
-		return resp, err
-	}
-	return resp, nil
+	NotificationMongoMapper notificationmapper.INotificationMongoMapper
+	SliderMongoMapper       slidermapper.ISliderMongoMapper
+	Redis                   *redis.Redis
 }
 
 func (s *SystemServiceImpl) DeleteSlider(ctx context.Context, req *gensystem.DeleteSliderReq) (resp *gensystem.DeleteSliderResp, err error) {
@@ -137,22 +108,15 @@ func (s *SystemServiceImpl) GetNotifications(ctx context.Context, req *gensystem
 }
 
 func (s *SystemServiceImpl) GetNotificationCount(ctx context.Context, req *gensystem.GetNotificationCountReq) (resp *gensystem.GetNotificationCountResp, err error) {
-
-	userCount, err := s.NotificationCountMongoMapper.GetCount(ctx, req.UserId)
-	if err != nil {
-		fmt.Println(err)
-		return resp, err
-	}
-
-	system, err := s.Redis.GetCtx(ctx, fmt.Sprintf("%s:%s", consts.NotificationCount, consts.NotificationSystemKey))
+	cnt, err := s.NotificationMongoMapper.Count(ctx, &notificationmapper.FilterOptions{
+		OnlyUserIds: []string{consts.NotificationSystemKey, req.UserId},
+	})
 	if err != nil {
 		return resp, err
 	}
-
-	systemCount, _ := strconv.ParseInt(system, 10, 64)
 
 	return &gensystem.GetNotificationCountResp{
-		Total: systemCount + userCount.Sum - userCount.Read,
+		Total: cnt,
 	}, nil
 }
 
@@ -168,19 +132,6 @@ func (s *SystemServiceImpl) CreateNotifications(ctx context.Context, req *gensys
 		return resp, err
 	}
 
-	if req.TargetUserId == consts.NotificationSystemKey {
-		if _, err = s.Redis.IncrCtx(ctx, fmt.Sprintf("%s:%s", consts.NotificationCount, consts.NotificationSystemKey)); err != nil {
-			return resp, err
-		}
-	} else {
-		uid, _ := primitive.ObjectIDFromHex(req.TargetUserId)
-		if err = s.NotificationCountMongoMapper.AddCount(ctx, &notificationcountmapper.NotificationCount{
-			ID:  uid,
-			Sum: 1,
-		}); err != nil {
-			return resp, err
-		}
-	}
 	return resp, nil
 }
 

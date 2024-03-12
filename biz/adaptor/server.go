@@ -13,8 +13,15 @@ type SystemServerImpl struct {
 	SystemService service.SystemService
 }
 
-func (s *SystemServerImpl) UpdateNotifications(ctx context.Context, req *system.UpdateNotificationsReq) (resp *system.UpdateNotificationsResp, err error) {
-	return s.SystemService.UpdateNotifications(ctx, req)
+func (s *SystemServerImpl) InsertNotificationCount(ctx context.Context, req *system.InsertNotificationCountReq) (res *system.InsertNotificationCountResp, err error) {
+	return s.SystemService.InsertNotificationCount(ctx, req)
+}
+
+//	func (s *SystemServerImpl) UpdateNotifications(ctx context.Context, req *system.UpdateNotificationsReq) (resp *system.UpdateNotificationsResp, err error) {
+//		return s.SystemService.UpdateNotifications(ctx, req)
+//	}
+func (s *SystemServerImpl) ReadNotifications(ctx context.Context, req *system.ReadNotificationsReq) (resp *system.ReadNotificationsResp, err error) {
+	return s.SystemService.ReadNotifications(ctx, req)
 }
 
 func (s *SystemServerImpl) GetSliders(ctx context.Context, req *system.GetSlidersReq) (resp *system.GetSlidersResp, err error) {

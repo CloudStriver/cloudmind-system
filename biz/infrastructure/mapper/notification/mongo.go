@@ -43,7 +43,6 @@ type (
 		Text            string             `bson:"text,omitempty" json:"text,omitempty"`
 		CreateAt        time.Time          `bson:"createAt,omitempty" json:"createAt,omitempty"`
 		UpdateAt        time.Time          `bson:"updateAt,omitempty" json:"updateAt,omitempty"`
-		Status          int64              `bson:"status,omitempty" json:"status,omitempty"`
 	}
 	MongoMapper struct {
 		conn *monc.Model

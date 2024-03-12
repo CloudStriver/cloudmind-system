@@ -16,7 +16,6 @@ func NotificationMapperToNotification(in *notificationmapper.Notification) *gens
 		Type:            in.Type,
 		Text:            in.Text,
 		CreateTime:      in.CreateAt.UnixMilli(),
-		Status:          in.Status,
 	}
 }
 

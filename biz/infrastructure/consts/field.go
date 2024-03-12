@@ -9,7 +9,12 @@ const (
 	Type         = "type"
 	TargetType   = "targetType"
 	ImageUrl     = "imageUrl"
-	LinkUrl      = "linkUrl"
+	Sum          = "sum"
+	Read         = "read"
 	IsPublic     = "isPublic"
 	Status       = "status"
+	//NotificationReadCountKey = "NotificationReadCount"
+	NotificationCount     = "NotificationCount"
+	NotificationSystemKey = "system"
+	//NotificationAll          = "all"
 )

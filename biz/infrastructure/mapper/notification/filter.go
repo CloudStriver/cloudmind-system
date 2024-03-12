@@ -8,7 +8,6 @@ import (
 type FilterOptions struct {
 	OnlyUserId *string
 	OnlyType   *int64
-	OnlyStatus *int64
 }
 
 type MongoFilter struct {
@@ -26,7 +25,6 @@ func MakeBsonFilter(options *FilterOptions) bson.M {
 func (f *MongoFilter) toBson() bson.M {
 	f.CheckOnlyUserId()
 	f.CheckOnlyType()
-	f.CheckOnlyIsRead()
 	return f.m
 }
 
@@ -39,11 +37,5 @@ func (f *MongoFilter) CheckOnlyUserId() {
 func (f *MongoFilter) CheckOnlyType() {
 	if f.OnlyType != nil {
 		f.m[consts.Type] = *f.OnlyType
-	}
-}
-
-func (f *MongoFilter) CheckOnlyIsRead() {
-	if f.OnlyStatus != nil {
-		f.m[consts.Status] = *f.OnlyStatus
 	}
 }

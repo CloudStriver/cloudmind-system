@@ -1,7 +1,9 @@
 package provider
 
 import (
+	notificationcountmapper "github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/notificationCount"
 	slidermapper "github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/slider"
+	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/store/redis"
 	"github.com/google/wire"
 
 	"github.com/CloudStriver/cloudmind-system/biz/application/service"
@@ -20,10 +22,12 @@ var ApplicationSet = wire.NewSet(
 
 var InfrastructureSet = wire.NewSet(
 	config.NewConfig,
+	redis.NewRedis,
 	MapperSet,
 )
 
 var MapperSet = wire.NewSet(
 	notificationmapper.NewNotificationModel,
+	notificationcountmapper.NewNotificationCountModel,
 	slidermapper.NewSliderModel,
 )

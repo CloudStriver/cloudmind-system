@@ -13,6 +13,10 @@ type SystemServerImpl struct {
 	SystemService service.SystemService
 }
 
+func (s *SystemServerImpl) CreateNotificationCount(ctx context.Context, req *system.CreateNotificationCountReq) (res *system.CreateNotificationCountResp, err error) {
+	return s.SystemService.CreateNotificationCount(ctx, req)
+}
+
 //	func (s *SystemServerImpl) UpdateNotifications(ctx context.Context, req *system.UpdateNotificationsReq) (resp *system.UpdateNotificationsResp, err error) {
 //		return s.SystemService.UpdateNotifications(ctx, req)
 //	}

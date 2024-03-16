@@ -26,6 +26,7 @@ func MakeBsonFilter(options *FilterOptions) bson.M {
 func (f *MongoFilter) toBson() bson.M {
 	f.CheckOnlyUserId()
 	f.CheckOnlyType()
+	f.CheckOnlyUserIds()
 	return f.m
 }
 
@@ -44,7 +45,7 @@ func (f *MongoFilter) CheckOnlyType() {
 func (f *MongoFilter) CheckOnlyUserIds() {
 	if f.OnlyUserIds != nil {
 		f.m[consts.TargetUserId] = bson.M{
-			"in": f.OnlyUserIds,
+			"$in": f.OnlyUserIds,
 		}
 	}
 }

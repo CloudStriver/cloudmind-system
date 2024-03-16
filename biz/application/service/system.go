@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/consts"
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/convertor"
 	notificationmapper "github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/notification"
+	notificationcountmapper "github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/notificationCount"
 	slidermapper "github.com/CloudStriver/cloudmind-system/biz/infrastructure/mapper/slider"
 	"github.com/CloudStriver/go-pkg/utils/pagination/mongop"
 	"github.com/CloudStriver/go-pkg/utils/pconvertor"
@@ -23,12 +25,23 @@ type SystemService interface {
 	GetNotifications(ctx context.Context, req *gensystem.GetNotificationsReq) (resp *gensystem.GetNotificationsResp, err error)
 	GetNotificationCount(ctx context.Context, req *gensystem.GetNotificationCountReq) (resp *gensystem.GetNotificationCountResp, err error)
 	CreateNotifications(ctx context.Context, req *gensystem.CreateNotificationsReq) (resp *gensystem.CreateNotificationsResp, err error)
+	CreateNotificationCount(ctx context.Context, req *gensystem.CreateNotificationCountReq) (resp *gensystem.CreateNotificationCountResp, err error)
 }
 
 type SystemServiceImpl struct {
-	NotificationMongoMapper notificationmapper.INotificationMongoMapper
-	SliderMongoMapper       slidermapper.ISliderMongoMapper
-	Redis                   *redis.Redis
+	NotificationMongoMapper      notificationmapper.INotificationMongoMapper
+	NotificationCountMongoMapper notificationcountmapper.INotificationCountMongoMapper
+	SliderMongoMapper            slidermapper.ISliderMongoMapper
+	Redis                        *redis.Redis
+}
+
+func (s *SystemServiceImpl) CreateNotificationCount(ctx context.Context, req *gensystem.CreateNotificationCountReq) (resp *gensystem.CreateNotificationCountResp, err error) {
+	uid, _ := primitive.ObjectIDFromHex(req.UserId)
+	err = s.NotificationCountMongoMapper.CreateNotificationCount(ctx, &notificationcountmapper.NotificationCount{
+		ID:   uid,
+		Read: 0,
+	})
+	return resp, err
 }
 
 func (s *SystemServiceImpl) DeleteSlider(ctx context.Context, req *gensystem.DeleteSliderReq) (resp *gensystem.DeleteSliderResp, err error) {
@@ -90,9 +103,9 @@ func (s *SystemServiceImpl) GetSliders(ctx context.Context, req *gensystem.GetSl
 func (s *SystemServiceImpl) GetNotifications(ctx context.Context, req *gensystem.GetNotificationsReq) (resp *gensystem.GetNotificationsResp, err error) {
 	resp = new(gensystem.GetNotificationsResp)
 	p := pconvertor.PaginationOptionsToModelPaginationOptions(req.PaginationOptions)
-	notifications, err := s.NotificationMongoMapper.GetNotifications(ctx, &notificationmapper.FilterOptions{
-		OnlyUserId: lo.ToPtr(req.UserId),
-		OnlyType:   req.OnlyType,
+	notifications, cnt, err := s.NotificationMongoMapper.GetNotificationsAndCount(ctx, &notificationmapper.FilterOptions{
+		OnlyUserIds: []string{req.UserId, consts.NotificationSystemKey},
+		OnlyType:    req.OnlyType,
 	}, p, mongop.IdCursorType)
 	if err != nil {
 		return resp, err
@@ -104,6 +117,15 @@ func (s *SystemServiceImpl) GetNotifications(ctx context.Context, req *gensystem
 	if p.LastToken != nil {
 		resp.Token = *p.LastToken
 	}
+
+	uid, _ := primitive.ObjectIDFromHex(req.UserId)
+	if err = s.NotificationCountMongoMapper.UpdateNotificationCount(ctx, &notificationcountmapper.NotificationCount{
+		ID:   uid,
+		Read: cnt,
+	}); err != nil {
+		return resp, err
+	}
+
 	return resp, nil
 }
 
@@ -115,8 +137,14 @@ func (s *SystemServiceImpl) GetNotificationCount(ctx context.Context, req *gensy
 		return resp, err
 	}
 
+	read, err := s.NotificationCountMongoMapper.GetNotificationCount(ctx, req.UserId)
+	if err != nil {
+		fmt.Println(err)
+
+		return resp, err
+	}
 	return &gensystem.GetNotificationCountResp{
-		Total: cnt,
+		Total: cnt - read,
 	}, nil
 }
 

@@ -4,10 +4,8 @@ import (
 	"context"
 	"github.com/CloudStriver/go-pkg/utils/pagination"
 	"github.com/CloudStriver/go-pkg/utils/pagination/mongop"
-	gensystem "github.com/CloudStriver/service-idl-gen-go/kitex_gen/cloudmind/system"
 	"github.com/samber/lo"
 	"github.com/zeromicro/go-zero/core/mr"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
@@ -15,7 +13,6 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/monc"
 
 	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/config"
-	"github.com/CloudStriver/cloudmind-system/biz/infrastructure/consts"
 )
 
 const (
@@ -28,7 +25,6 @@ type (
 	INotificationMongoMapper interface {
 		GetNotifications(ctx context.Context, fopts *FilterOptions, popts *pagination.PaginationOptions, sorter mongop.MongoCursor) ([]*Notification, error)
 		Count(ctx context.Context, fopts *FilterOptions) (int64, error)
-		UpdateNotifications(ctx context.Context, fopts *FilterOptions) error
 		DeleteNotifications(ctx context.Context, fopts *FilterOptions) error
 		InsertOne(ctx context.Context, data *Notification) error
 		GetNotificationsAndCount(ctx context.Context, fopts *FilterOptions, popts *pagination.PaginationOptions, sorter mongop.MongoCursor) ([]*Notification, int64, error)
@@ -117,14 +113,6 @@ func (m *MongoMapper) GetNotifications(ctx context.Context, fopts *FilterOptions
 	}
 
 	return data, nil
-}
-
-func (m *MongoMapper) UpdateNotifications(ctx context.Context, fopts *FilterOptions) error {
-	filter := MakeBsonFilter(fopts)
-	if _, err := m.conn.UpdateManyNoCache(ctx, filter, bson.M{"$set": bson.M{consts.Status: int64(gensystem.NotificationStatus_Read), consts.UpdateAt: time.Now()}}); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (m *MongoMapper) Count(ctx context.Context, fopts *FilterOptions) (int64, error) {

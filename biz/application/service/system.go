@@ -26,6 +26,7 @@ type SystemService interface {
 	GetNotificationCount(ctx context.Context, req *gensystem.GetNotificationCountReq) (resp *gensystem.GetNotificationCountResp, err error)
 	CreateNotifications(ctx context.Context, req *gensystem.CreateNotificationsReq) (resp *gensystem.CreateNotificationsResp, err error)
 	CreateNotificationCount(ctx context.Context, req *gensystem.CreateNotificationCountReq) (resp *gensystem.CreateNotificationCountResp, err error)
+	DeleteNotifications(ctx context.Context, req *gensystem.DeleteNotificationsReq) (resp *gensystem.DeleteNotificationsResp, err error)
 }
 
 type SystemServiceImpl struct {
@@ -33,6 +34,17 @@ type SystemServiceImpl struct {
 	NotificationCountMongoMapper notificationcountmapper.INotificationCountMongoMapper
 	SliderMongoMapper            slidermapper.ISliderMongoMapper
 	Redis                        *redis.Redis
+}
+
+func (s *SystemServiceImpl) DeleteNotifications(ctx context.Context, req *gensystem.DeleteNotificationsReq) (resp *gensystem.DeleteNotificationsResp, err error) {
+	if err = s.NotificationMongoMapper.DeleteNotifications(ctx, &notificationmapper.FilterOptions{
+		OnlyUserId:          lo.ToPtr(req.UserId),
+		OnlyNotificationIds: req.NotificationIds,
+		OnlyType:            req.OnlyType,
+	}); err != nil {
+		return resp, err
+	}
+	return resp, nil
 }
 
 func (s *SystemServiceImpl) CreateNotificationCount(ctx context.Context, req *gensystem.CreateNotificationCountReq) (resp *gensystem.CreateNotificationCountResp, err error) {
@@ -57,7 +69,6 @@ func (s *SystemServiceImpl) UpdateSlider(ctx context.Context, req *gensystem.Upd
 		ID:       oid,
 		ImageUrl: req.ImageUrl,
 		LinkUrl:  req.LinkUrl,
-		Type:     req.Type,
 		IsPublic: req.IsPublic,
 	}); err != nil {
 		return resp, err
@@ -69,7 +80,6 @@ func (s *SystemServiceImpl) CreateSlider(ctx context.Context, req *gensystem.Cre
 	if err = s.SliderMongoMapper.InsertOne(ctx, &slidermapper.Slider{
 		ImageUrl: req.ImageUrl,
 		LinkUrl:  req.LinkUrl,
-		Type:     req.Type,
 		IsPublic: req.IsPublic,
 	}); err != nil {
 		return resp, err

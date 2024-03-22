@@ -39,7 +39,6 @@ type (
 		ID       primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
 		ImageUrl string             `bson:"imageUrl,omitempty" json:"imageUrl,omitempty"`
 		LinkUrl  string             `bson:"linkUrl,omitempty" json:"linkUrl,omitempty"`
-		Type     int64              `bson:"type,omitempty" json:"type,omitempty"`
 		IsPublic int64              `bson:"isPublic,omitempty" json:"isPublic,omitempty"`
 		UpdateAt time.Time          `bson:"updateAt,omitempty" json:"updateAt,omitempty"`
 		CreateAt time.Time          `bson:"createAt,omitempty" json:"createAt,omitempty"`

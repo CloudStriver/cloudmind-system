@@ -128,14 +128,15 @@ func (s *SystemServiceImpl) GetNotifications(ctx context.Context, req *gensystem
 		resp.Token = *p.LastToken
 	}
 
-	uid, _ := primitive.ObjectIDFromHex(req.UserId)
-	if err = s.NotificationCountMongoMapper.UpdateNotificationCount(ctx, &notificationcountmapper.NotificationCount{
-		ID:   uid,
-		Read: cnt,
-	}); err != nil {
-		return resp, err
+	if req.OnlyType == nil {
+		uid, _ := primitive.ObjectIDFromHex(req.UserId)
+		if err = s.NotificationCountMongoMapper.UpdateNotificationCount(ctx, &notificationcountmapper.NotificationCount{
+			ID:   uid,
+			Read: cnt,
+		}); err != nil {
+			return resp, err
+		}
 	}
-
 	return resp, nil
 }
 
